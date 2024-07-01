@@ -3,5 +3,6 @@ enum FishAction {
   needPopulate,
   startLife,
   close,
+  killIsolate,
   sendPort;
 }

@@ -21,8 +21,8 @@ class Aquarium {
   void runApp() {
     stdout.write("Enter initial fish count: ");
     final int count = int.tryParse(stdin.readLineSync() ?? '0') ?? 0;
-    initial(count);
     portListener();
+    initial(count);
   }
 
   void portListener() {
@@ -32,10 +32,10 @@ class Aquarium {
           case FishAction.sendPort:
             _fishList.update(
               value.fishId,
-              (value) {
-                value.sendPort?.send(FishAction.startLife);
-                return value.copyWith(
-                  sendPort: value.sendPort,
+              (model) {
+                (value.args as SendPort?)?.send(FishAction.startLife);
+                return model.copyWith(
+                  sendPort: (value.args as SendPort?),
                 );
               },
             );
@@ -43,11 +43,15 @@ class Aquarium {
           case FishAction.fishDied:
             final model = _fishList[value.fishId];
             model?.sendPort?.send(FishAction.close);
+            _diedFishCount++;
+            break;
+          case FishAction.killIsolate:
+            final model = _fishList[value.fishId];
             model?.isolate.kill(
               priority: Isolate.immediate,
             );
-            _diedFishCount++;
-            break;
+            _fishList.remove(value.fishId);
+            print(toString());
           case FishAction.needPopulate:
             population(value.fishId, value.args as Genders);
             break;
@@ -60,7 +64,28 @@ class Aquarium {
 
   void population(String fishId, Genders gender) {
     if (_fishList.isNotEmpty) {
-
+      final sortFishList = _fishList.entries
+          .where(
+            (element) => element.value.genders != gender,
+          )
+          .toList();
+      if (sortFishList.isNotEmpty) {
+        final findIndex = _random.nextInt(sortFishList.length);
+        final findFishId = sortFishList[findIndex].key;
+        if (gender.isMale) {
+          createFish(
+            maleId: fishId,
+            femaleId: findFishId,
+          );
+        } else {
+          createFish(
+            maleId: findFishId,
+            femaleId: fishId,
+          );
+        }
+      } else {
+        closeAquarium();
+      }
     }
   }
 
@@ -85,8 +110,8 @@ class Aquarium {
     final lastName = gender.isMale
         ? FishNames.maleLast[_random.nextInt(FishNames.maleLast.length)]
         : FishNames.femaleLast[_random.nextInt(FishNames.femaleLast.length)];
-    final lifespan = Duration(seconds: _random.nextInt(50) + 10);
-    final populateCount = _random.nextInt(2) + 1;
+    final lifespan = Duration(seconds: _random.nextInt(40) + 5);
+    final populateCount = _random.nextInt(1) + 1;
     final List<Duration> listPopulationTime = List.generate(
       populateCount,
       (index) => Duration(seconds: _random.nextInt(15) + 5),
@@ -107,6 +132,11 @@ class Aquarium {
       genders: gender,
     );
     _newFishCount++;
+    print(toString());
+  }
+
+  void closeAquarium() {
+// TODO: need add print console and close app
   }
 
   @override
@@ -123,7 +153,11 @@ class Aquarium {
         femaleCount++;
       }
     });
-    print('\x1B[2J\x1B[0;0H');
-    return 'Aquarium info\nFish count: $fishCount\nMale count: $maleCount\nFemale count: $femaleCount\nNew fish count: $_newFishCount\n Died fish count: $_diedFishCount';
+
+    if (fishCount == 0) {
+      closeAquarium();
+    }
+    // print('\x1B[2J\x1B[0;0H');
+    return 'Aquarium info - Fish count: $fishCount, Male count: $maleCount, Female count: $femaleCount, New fish count: $_newFishCount, Died fish count: $_diedFishCount';
   }
 }

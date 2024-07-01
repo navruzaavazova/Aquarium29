@@ -74,6 +74,7 @@ class Fish extends BaseFish {
         args: _receiverPort?.sendPort,
       ),
     );
+    printMessage(false);
   }
 
   FutureOr<void> _close() {
@@ -81,6 +82,13 @@ class Fish extends BaseFish {
     _lifeTimer?.cancel();
     _receiverPort?.close();
     _receiverPort = null;
+    printMessage(true);
+    sendPort?.send(
+      FishRequest(
+        fishId: id,
+        action: FishAction.killIsolate,
+      ),
+    );
     sendPort = null;
   }
 
@@ -103,5 +111,13 @@ class Fish extends BaseFish {
 
   static run(Fish fish) {
     fish.createReceivePort();
+  }
+
+  void printMessage(bool isDied) {
+    if (isDied) {
+      print('Died Fish - ID: $id, Gender: $gender, Full name: $firstName $lastName');
+    } else {
+      print('Created New Fish - ID: $id, Gender: $gender, Full name: $firstName $lastName');
+    }
   }
 }

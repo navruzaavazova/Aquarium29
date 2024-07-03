@@ -1,6 +1,7 @@
 import 'dart:isolate';
 
-import 'package:aquarium/fish/genders.dart';
+
+import '../fish/genders.dart';
 
 class FishModel {
   final SendPort? sendPort;

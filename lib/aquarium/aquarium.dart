@@ -3,13 +3,16 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 
-import 'package:aquarium/aquarium/fish_model.dart';
-import 'package:aquarium/fish/fish.dart';
-import 'package:aquarium/fish/fish_action.dart';
-import 'package:aquarium/fish/fish_request.dart';
-import 'package:aquarium/fish/genders.dart';
-import 'package:aquarium/utils/fish_names.dart';
+import 'package:aquarium/shark/shark.dart';
+import 'package:aquarium/shark/shark_action.dart';
 import 'package:uuid/uuid.dart';
+
+import '../fish/fish.dart';
+import '../fish/fish_action.dart';
+import '../fish/fish_request.dart';
+import '../fish/genders.dart';
+import '../utils/fish_names.dart';
+import 'fish_model.dart';
 
 class Aquarium {
   final Random _random = Random();
@@ -17,12 +20,15 @@ class Aquarium {
   final ReceivePort _mainReceivePort = ReceivePort();
   int _newFishCount = 0;
   int _diedFishCount = 0;
+  SendPort? sharkSendPort;
+  Isolate? sharkIsolate;
 
   void runApp() {
     stdout.write("Enter initial fish count: ");
     final int count = int.tryParse(stdin.readLineSync() ?? '0') ?? 0;
     portListener();
     initial(count);
+    createShark();
   }
 
   void portListener() {
@@ -52,14 +58,55 @@ class Aquarium {
             );
             _fishList.remove(value.fishId);
             print(toString());
+            _checkFishCount();
+            break;
           case FishAction.needPopulate:
             population(value.fishId, value.args as Genders);
             break;
           default:
             break;
         }
+      } else if (value is SendPort) {
+        sharkSendPort = value;
+        _checkFishCount();
+      } else if (value == SharkAction.killFish) {
+        _killRandomFish();
       }
     });
+  }
+
+  void _checkFishCount() {
+    if (sharkSendPort != null) {
+      final fishCount = _fishList.length;
+      if (_fishList.length > 10) {
+        sharkSendPort?.send({
+          'action': SharkAction.start,
+          'fishCount': fishCount,
+        });
+      } else {
+        sharkSendPort?.send({'action': SharkAction.waiting});
+      }
+    }
+  }
+
+  Future<void> createShark() async {
+    final String id = '1';
+    final shark = Shark(id: id, sendPort: _mainReceivePort.sendPort);
+    sharkIsolate = await Isolate.spawn(Shark.run, shark);
+  }
+
+  void _killRandomFish() {
+    if (_fishList.isNotEmpty) {
+      final randomFishId =
+          _fishList.keys.elementAt(_random.nextInt(_fishList.length));
+      final model = _fishList[randomFishId];
+      model?.sendPort?.send(FishAction.close);
+      model?.isolate.kill(priority: Isolate.immediate);
+      _fishList.remove(randomFishId);
+      _diedFishCount++;
+      print('Shark ate id $randomFishId gender ${model?.genders}');
+      _checkFishCount();
+    }
   }
 
   void population(String fishId, Genders gender) {
@@ -83,9 +130,9 @@ class Aquarium {
             femaleId: fishId,
           );
         }
-      } else {
-        closeAquarium();
       }
+    } else {
+      closeAquarium();
     }
   }
 
@@ -133,10 +180,14 @@ class Aquarium {
     );
     _newFishCount++;
     print(toString());
+    _checkFishCount();
   }
 
   void closeAquarium() {
-// TODO: need add print console and close app
+    _mainReceivePort.close();
+    sharkIsolate?.kill(priority: Isolate.immediate);
+    print('Aquarium is empty');
+    exit(0);
   }
 
   @override
@@ -158,6 +209,6 @@ class Aquarium {
       closeAquarium();
     }
     // print('\x1B[2J\x1B[0;0H');
-    return 'Aquarium info - Fish count: $fishCount, Male count: $maleCount, Female count: $femaleCount, New fish count: $_newFishCount, Died fish count: $_diedFishCount';
+    return 'Aquarium info - Fish count: $fishCount, Male count: $maleCount, Female count: $femaleCount, New fish count: $_newFishCount, Died fish count: $_diedFishCount \n';
   }
 }

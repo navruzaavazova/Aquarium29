@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:aquarium/fish/genders.dart';
+import 'genders.dart';
+
 
 abstract class BaseFish {
   final String id;

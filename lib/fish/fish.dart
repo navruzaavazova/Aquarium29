@@ -1,10 +1,10 @@
 import 'dart:async';
-
-import 'package:aquarium/fish/fish_action.dart';
-import 'package:aquarium/fish/base_fish.dart';
 import 'dart:isolate';
 
-import 'package:aquarium/fish/fish_request.dart';
+import 'base_fish.dart';
+import 'fish_action.dart';
+import 'fish_request.dart';
+
 
 class Fish extends BaseFish {
   Fish({
@@ -115,9 +115,9 @@ class Fish extends BaseFish {
 
   void printMessage(bool isDied) {
     if (isDied) {
-      print('Died Fish - ID: $id, Gender: $gender, Full name: $firstName $lastName');
+      print('Died Fish - ID: $id, Gender: $gender, Full name: $firstName $lastName\n');
     } else {
-      print('Created New Fish - ID: $id, Gender: $gender, Full name: $firstName $lastName');
+      print('Created New Fish - ID: $id, Gender: $gender, Full name: $firstName $lastName\n');
     }
   }
 }

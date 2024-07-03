@@ -78,7 +78,7 @@ class Aquarium {
   void _checkFishCount() {
     if (sharkSendPort != null) {
       final fishCount = _fishList.length;
-      if (_fishList.length > 10) {
+      if (fishCount > 10) {
         sharkSendPort?.send({
           'action': SharkAction.start,
           'fishCount': fishCount,
@@ -157,7 +157,7 @@ class Aquarium {
     final lastName = gender.isMale
         ? FishNames.maleLast[_random.nextInt(FishNames.maleLast.length)]
         : FishNames.femaleLast[_random.nextInt(FishNames.femaleLast.length)];
-    final lifespan = Duration(seconds: _random.nextInt(40) + 5);
+    final lifespan = Duration(seconds: _random.nextInt(60) + 10);
     final populateCount = _random.nextInt(1) + 1;
     final List<Duration> listPopulationTime = List.generate(
       populateCount,
@@ -185,7 +185,6 @@ class Aquarium {
 
   void closeAquarium() {
     _mainReceivePort.close();
-    sharkIsolate?.kill(priority: Isolate.immediate);
     print('Aquarium is empty');
     exit(0);
   }

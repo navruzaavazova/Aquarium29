@@ -21,7 +21,7 @@ class Shark extends BaseShark {
     if (_timer != null) {
       _timer?.cancel();
     }
-    int interval = fishCount > 20 ? 5 : 10;
+    int interval = fishCount > 30 ? 2 : fishCount > 20 ? 5: 10;
     _timer = Timer.periodic(Duration(seconds: interval), (timer) {
       _killFish();
     });

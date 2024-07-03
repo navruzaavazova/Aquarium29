@@ -104,7 +104,7 @@ class Aquarium {
       model?.isolate.kill(priority: Isolate.immediate);
       _fishList.remove(randomFishId);
       _diedFishCount++;
-      print('Shark ate id $randomFishId gender ${model?.genders}');
+      print('Shark ate id $randomFishId gender ${model?.genders}\n');
       _checkFishCount();
     }
   }

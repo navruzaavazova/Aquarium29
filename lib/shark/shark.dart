@@ -56,19 +56,12 @@ class Shark extends BaseShark {
           case SharkAction.waiting:
             waiting();
             break;
-          case SharkAction.killIsolate:
-            close();
           default:
             break;
         }
       }
     });
   }
-
-  void close() {
-    _receivePort?.close();
-  }
-
   static run(Shark shark) {
     shark.createReceivePort();
   }

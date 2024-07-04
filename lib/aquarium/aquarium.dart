@@ -47,18 +47,14 @@ class Aquarium {
             );
             break;
           case FishAction.fishDied:
-            final model = _fishList[value.fishId];
-            model?.sendPort?.send(FishAction.close);
-            _diedFishCount++;
+            _fishDied(value.fishId);
             break;
           case FishAction.killIsolate:
             final model = _fishList[value.fishId];
-            model?.isolate.kill(
-              priority: Isolate.immediate,
-            );
-            _fishList.remove(value.fishId);
+            _fishKillIsolate(value.action, model);
             print(toString());
             _checkFishCount();
+
             break;
           case FishAction.needPopulate:
             population(value.fishId, value.args as Genders);
@@ -73,6 +69,18 @@ class Aquarium {
         _killRandomFish();
       }
     });
+  }
+    void _fishDied(fishId) {
+    final model = _fishList[fishId];
+    model?.sendPort?.send(FishAction.close);
+    _diedFishCount++;
+  }
+
+  void _fishKillIsolate(fishId, model) {
+    model?.isolate.kill(
+      priority: Isolate.immediate,
+    );
+    _fishList.remove(fishId);
   }
 
   void _checkFishCount() {
@@ -100,10 +108,8 @@ class Aquarium {
       final randomFishId =
           _fishList.keys.elementAt(_random.nextInt(_fishList.length));
       final model = _fishList[randomFishId];
-      model?.sendPort?.send(FishAction.close);
-      model?.isolate.kill(priority: Isolate.immediate);
-      _fishList.remove(randomFishId);
-      _diedFishCount++;
+      _fishDied(randomFishId);
+      _fishKillIsolate(randomFishId, model);
       print('Shark ate id $randomFishId gender ${model?.genders}\n');
       _checkFishCount();
     }
@@ -184,7 +190,6 @@ class Aquarium {
   }
 
   void closeAquarium() {
-    _mainReceivePort.close();
     print('Aquarium is empty');
     exit(0);
   }

@@ -53,7 +53,6 @@ class Aquarium {
             final model = _fishList[value.fishId];
             _fishKillIsolate(value.action, model);
             print(toString());
-            _checkFishCount();
 
             break;
           case FishAction.needPopulate:
@@ -81,6 +80,7 @@ class Aquarium {
       priority: Isolate.immediate,
     );
     _fishList.remove(fishId);
+    _checkFishCount();
   }
 
   void _checkFishCount() {
@@ -111,7 +111,6 @@ class Aquarium {
       _fishDied(randomFishId);
       _fishKillIsolate(randomFishId, model);
       print('Shark ate id $randomFishId gender ${model?.genders}\n');
-      _checkFishCount();
     }
   }
 
